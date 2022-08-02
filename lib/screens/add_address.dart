@@ -87,23 +87,45 @@ class _AddAddressPageState extends State<AddAddressPage> {
     _addressData = _myAddressData();
   }
 
-  _getCurrentLocation() async {
-    Position position =
-        await getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+  _getCurrentLocation() async{
+    Position position = await _getGeoLocationPosition();
+    GetAddressFromLatLong(position);
+  }
+
+  Future<Position> _getGeoLocationPosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      await Geolocator.openLocationSettings();
+      return Future.error('Location services are disabled.');
+    }
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permissions are denied');
+      }
+      else{
+
+      }
+    }
+    if (permission == LocationPermission.deniedForever) {
+      // Permissions are denied forever, handle appropriately.
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
+    return await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+  }
+
+  Future<void> GetAddressFromLatLong(Position position)async {
     List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
+    print(placemarks);
     Placemark place = placemarks[0];
     setState(() {
-      _address = place.street +
-          ', ' +
-          place.name +
-          ', ' +
-          place.subLocality +
-          ', ' +
-          place.locality +
-          ' - ' +
-          place.postalCode;
-      addressController = TextEditingController()..text = _address;
+      addressController.text = '${place.street+" "+place.subLocality+" "+place.locality+" "+place.postalCode+" "+place.country}';
     });
+
   }
 
   Widget _nameTextbox(_initialValue) {
@@ -286,7 +308,6 @@ class _AddAddressPageState extends State<AddAddressPage> {
       margin: new EdgeInsets.only(left: 20, right: 20, bottom: 10),
       child: TextFormField(
         initialValue: _initialValue,
-        // controller: landmarkController,
         textCapitalization: TextCapitalization.sentences,
         cursorColor: Theme.of(context).accentColor,
         validator: (value) {

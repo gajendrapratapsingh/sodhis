@@ -42,7 +42,7 @@ class _SignupPageState extends State<SignupPage> {
     super.dispose();
   }
 
-  _getCurrentLocation() async {
+  /*_getCurrentLocation() async {
     Position position = await getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
     List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
     Placemark place = placemarks[0];
@@ -50,7 +50,7 @@ class _SignupPageState extends State<SignupPage> {
         _address = place.street+', '+place.name+', '+place.subLocality+', '+place.locality+' - '+place.postalCode;
         addressController = TextEditingController()..text = _address;
     });
-  }
+  }*/
 
   Widget _welcomeText() {
     return Container(
@@ -223,7 +223,7 @@ class _SignupPageState extends State<SignupPage> {
         color: Colors.green,
         splashColor: Colors.purple,
         onPressed: () {
-          _getCurrentLocation();
+          //_getCurrentLocation();
         },
       ),
     );

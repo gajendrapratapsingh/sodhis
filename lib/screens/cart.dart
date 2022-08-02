@@ -633,9 +633,9 @@ class _CartPageState extends State<CartPage>  with SingleTickerProviderStateMixi
                                               ),
                                               SizedBox(height: 6),
                                               Padding(
-                                                padding:
-                                                    const EdgeInsets.all(0.0),
+                                                padding: const EdgeInsets.all(0.0),
                                                 child: Row(
+                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                   children: <Widget>[
                                                     Expanded(
                                                       child: Text(

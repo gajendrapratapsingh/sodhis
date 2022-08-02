@@ -155,9 +155,7 @@ class _ChangeAddressPageState extends State<AddNewAddressPage> {
                                           },
                                         );
                                       } else {
-                                        Fluttertoast.showToast(
-                                            msg:
-                                                'Primary address cant be change');
+                                        Fluttertoast.showToast(msg: 'Primary address cant be change');
                                       }
                                     },
                                   ),
@@ -323,7 +321,7 @@ class _ChangeAddressPageState extends State<AddNewAddressPage> {
               borderRadius: BorderRadius.circular(8.0),
             ),
             child: Text(
-              "Make default Address",
+              "Deliver to this Address",
               style: TextStyle(
                 color: Colors.white,
               ),

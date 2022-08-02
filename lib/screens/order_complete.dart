@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OrderCompletePage extends StatefulWidget {
   @override
@@ -49,6 +50,8 @@ class _OrderCompletePageState extends State<OrderCompletePage> {
                     minWidth: MediaQuery.of(context).size.width,
                     child: RaisedButton(
                       onPressed: () async {
+                        SharedPreferences prefs = await SharedPreferences.getInstance();
+                        prefs.setString('type', "");
                         Navigator.of(context)
                             .pushNamedAndRemoveUntil('/dashboard', (route) => false);
                       },

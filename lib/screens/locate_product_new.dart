@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:sodhis_app/utilities/basic_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:barcode_scan/barcode_scan.dart';
+// import 'package:barcode_scan/barcode_scan.dart';
 
 
 class LocateProductNewPage extends StatefulWidget {

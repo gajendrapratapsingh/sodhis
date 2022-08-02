@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:responsive_framework/responsive_wrapper.dart';
+import 'package:responsive_framework/utils/scroll_behavior.dart';
+import 'package:sodhis_app/providers/itemcount_provider.dart';
+import 'package:sodhis_app/screens/apply_coupon_screen.dart';
+import 'package:sodhis_app/screens/delivery_time_slot_screen.dart';
+import 'package:sodhis_app/screens/grocery_all_category.dart';
+import 'package:sodhis_app/screens/grocery_new_screen.dart';
+import 'package:sodhis_app/screens/grocery_screen.dart';
 import 'package:sodhis_app/screens/intro.dart';
 
 import 'package:sodhis_app/screens/login.dart';
 import 'package:sodhis_app/screens/forgot_pin.dart';
 import 'package:sodhis_app/screens/multislider_home.dart';
+import 'package:sodhis_app/screens/payment_options_screen.dart';
 import 'package:sodhis_app/screens/rechare_successful.dart';
 import 'package:sodhis_app/screens/signup.dart';
 import 'package:sodhis_app/screens/otp_signup.dart';
@@ -117,12 +126,28 @@ class _MyAppState extends State<MyApp> {
             return ShoppingListProvider();
           },
         ),
+        ChangeNotifierProvider<ItemCountProvider>(
+          create: (BuildContext context) {
+            return ItemCountProvider();
+          },
+        ),
       ],
       child: MaterialApp(
-        title: 'Sodhis',
+        title: '7Mirchi',
         theme: ThemeData(
           primarySwatch: createMaterialColor(Color(0xFFc62714)),
         ),
+        builder: (context, widget) => ResponsiveWrapper.builder(
+            BouncingScrollWrapper.builder(context, widget),
+            maxWidth: 800,
+            minWidth: 450,
+            defaultScale: true,
+            breakpoints: [
+              ResponsiveBreakpoint.resize(450, name: MOBILE),
+              // ResponsiveBreakpoint.autoScale(450, name: TABLET),
+              // ResponsiveBreakpoint.resize(450, name: DESKTOP),
+            ],
+        background: Container(color: Color(0xFFF5F5F5))),
         debugShowCheckedModeBanner: false,
         // routes: {
         //   '/login': (context) => LoginPage(),
@@ -249,13 +274,14 @@ class _MyAppState extends State<MyApp> {
                 settings: settings,
               );
               break;*/
-           /* case '/add-shoppinglist':
+            case '/delivery-timeslot':
+              var obj = settings.arguments;
               return PageTransition(
-                child: AddShoppingListPage(),
-                type: PageTransitionType.rightToLeftWithFade,
+                child: DeliveryTimeSlotScreen(argument: obj),
+                type: null,
                 settings: settings,
               );
-              break;*/
+              break;
             case '/notifications':
               return PageTransition(
                 child: NotificationsPage(),
@@ -396,34 +422,37 @@ class _MyAppState extends State<MyApp> {
                 settings: settings,
               );
               break;
-          /*  case '/shop2':
+            case '/payment_options':
+              var obj = settings.arguments;
               return PageTransition(
-                child: Shop2Page(),
+                child: PaymentOptionsScreen(argument: obj),
                 type: PageTransitionType.rightToLeftWithFade,
                 settings: settings,
               );
               break;
-            case '/select-area':
+            case '/apply_coupon':
+              var obj = settings.arguments;
               return PageTransition(
-                child: SelectAreaPage(),
+                child: ApplyCouponScreen(argument: obj),
                 type: PageTransitionType.rightToLeftWithFade,
                 settings: settings,
               );
               break;
-            case '/shop':
+            case '/grocery':
               return PageTransition(
-                child: ShopPage(),
+                child: GroceryNewScreen(),
                 type: PageTransitionType.rightToLeftWithFade,
                 settings: settings,
               );
-              break;*/
-          /*  case '/select-store':
+              break;
+           case '/grocery-item':
+              var obj = settings.arguments;
               return PageTransition(
-                child: SelectStorePage(),
-                type: PageTransitionType.rightToLeftWithFade,
+                child: GroceryAllCategory(argument: obj),
+                type: null,
                 settings: settings,
               );
-              break;*/
+              break;
             case '/wallet':
               return PageTransition(
                 child: MyWallet(),
@@ -458,8 +487,7 @@ class _MyAppState extends State<MyApp> {
           }
         },
         home: Scaffold(
-          body:  homeOrLog(),
-
+           body:  homeOrLog(),
         ),
       ),
     );

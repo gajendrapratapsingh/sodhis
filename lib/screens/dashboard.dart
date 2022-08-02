@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:badges/badges.dart';
 import 'package:flutter/material.dart';
@@ -32,11 +33,12 @@ class _DashboardPageState extends State<DashboardPage> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       _userId = prefs.getInt('user_id').toString();
-      _walletBalance = walletBalance();
+      _walletBalance = walletBalance(prefs);
     });
+    print("Wallet Balance "+_walletBalance.toString());
   }
 
-  Future walletBalance() async {
+  Future walletBalance(SharedPreferences prefs) async {
     var response = await http.post(
       new Uri.https(BASE_URL, API_PATH + "/walletbalance"),
       body: {
@@ -50,8 +52,8 @@ class _DashboardPageState extends State<DashboardPage> {
     if (response.statusCode == 200) {
       var data = json.decode(response.body);
       setState(() {
-        amount = int.parse(
-            double.parse(data['Response']['total_balance']).round().toString());
+        amount = int.parse(double.parse(data['Response']['total_balance']).round().toString());
+        prefs.setString("walletBalance", amount.toString());
       });
 
       return data;
@@ -62,48 +64,53 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-            backgroundColor: Colors.teal,
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.assignment),
-            label: 'Orders',
-          ),
-          BottomNavigationBarItem(
-            icon: Badge(
-                shape: BadgeShape.square,
-                toAnimate: false,
-                borderRadius: BorderRadius.circular(8),
-                animationType: BadgeAnimationType.scale,
-                padding: EdgeInsetsDirectional.only(start: 3, end: 3, top: 2, bottom: 2),
-                badgeContent: Text("\u20B9 " + amount.toString(), style: TextStyle(color: Colors.white, fontSize: 8)),
-                child: Icon(Icons.account_balance_wallet)),
-            label: 'My Wallet',
-          ),
-          /*BottomNavigationBarItem(
+    return WillPopScope(
+        child: Scaffold(
+          bottomNavigationBar: BottomNavigationBar(
+            type: BottomNavigationBarType.fixed,
+            items: [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home),
+                label: 'Home',
+                backgroundColor: Colors.teal,
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.assignment),
+                label: 'Orders',
+              ),
+              BottomNavigationBarItem(
+                icon: Badge(
+                    shape: BadgeShape.square,
+                    toAnimate: false,
+                    borderRadius: BorderRadius.circular(8),
+                    animationType: BadgeAnimationType.scale,
+                    padding: EdgeInsetsDirectional.only(start: 3, end: 3, top: 2, bottom: 2),
+                    badgeContent: Text("\u20B9 " + amount.toString(), style: TextStyle(color: Colors.white, fontSize: 8)),
+                    child: Icon(Icons.account_balance_wallet)),
+                label: 'My Wallet',
+              ),
+              /*BottomNavigationBarItem(
             icon: Icon(Icons.location_city),
             title: Text('Location'),
           ),*/
-        ],
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-      ),
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: <Widget>[
-          HomePageMultislider(),
-          MyOrdersPage(),
-          MyWallet(),
-          //ShopPage(),
-          // LocationPage(),
-        ],
-      ),
+            ],
+            currentIndex: _selectedIndex,
+            onTap: _onItemTapped,
+          ),
+          body: IndexedStack(
+            index: _selectedIndex,
+            children: <Widget>[
+              HomePageMultislider(),
+              MyOrdersPage(),
+              MyWallet(),
+              //ShopPage(),
+              // LocationPage(),
+            ],
+          ),
+        ),
+        onWillPop: () async{
+           exit(0);
+        }
     );
   }
 

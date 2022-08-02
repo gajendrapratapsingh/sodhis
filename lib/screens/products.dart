@@ -19,12 +19,14 @@ class ProductsPage extends StatefulWidget {
 }
 
 class _ProductsPageState extends State<ProductsPage> {
+
+  String restaurant_id;
+
   var _userId;
   var _title;
   var _id;
   var _type;
   Future _productList;
-  //Future _productlistCopy;
   Future itemFinderList;
   var errorCode;
 
@@ -40,49 +42,82 @@ class _ProductsPageState extends State<ProductsPage> {
     _title = data['title'];
     _type = data['type'];
 
+    print(_id.toString());
+
     Preference().getPreferences().then((prefs) {
       setState(() {
         _userId = prefs.getInt('user_id').toString();
-        if(_type == null){
+        if(_type == null) {
           itemFinderList = _itemFinderData();
-          print("Item finder "+itemFinderList.toString());
+        }
+        else if(_type == 'category'){
+          _productList = _myRestaurantData();
         }
         else{
-          _productList = _myProfileData();
-
-          //_productlistCopy = _myProfileData();
+          _productList = _myGroceryData();
         }
 
       });
     });
   }
 
+  showConfirmDialog(cancel, done, title, content, userid, discount, mrp, qty, id) async{
+    final _cart = Provider.of<CartBadge>(context, listen: false);
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    Widget cancelButton = FlatButton(
+      child: Text(cancel),
+      onPressed: () {
+        Navigator.of(context).pop();
+      },
+    );
+    Widget doneButton = FlatButton(
+      child: Text(done),
+      onPressed: () async{
+        var response = await http
+            .post(
+          new Uri.https(BASE_URL,
+              API_PATH + "/cart-add"),
+          headers: {"Accept": "application/json", 'Content-Type': 'application/json'},
+          body: jsonEncode({
+            "user_id": userid,
+            "offer_price": discount,
+            "rate": mrp,
+            "restaurant_id": "35",
+            "quantity": qty,
+            "product_id": id,
+            "addon_items" : []
+          }),
+        );
+        if (response.statusCode ==
+            200) {
+          _cart.showCartBadge(_userId);
+          var data = json.decode(response.body);
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          prefs.setInt('cart_count', int.parse(data['Response']['count'].toString()));
+        }
+        Navigator.of(context).pop();
+      },
+    );
 
-  /*void searching(String search) {
-    Future dummyListData;
-    if (search.isNotEmpty) {
-        _productlistCopy.forEach((item) {
-        item.forEach((key, value) {
-          if (value.toString().contains(search)) {
-            dummyListData.add(item);
-          }
-        });
-      });
-      setState(() {
-        data.clear();
-        data.addAll(dummyListData);
-      });
-    } else {
-      setState(() {
-        data.clear();
-        data.addAll(dataCopy);
-      });
-    }
-  }*/
+    // Set up the AlertDialog
+    AlertDialog alert = AlertDialog(
+      title: Text(title),
+      content: Text(content),
+      actions: [
+        cancelButton,
+        doneButton,
+      ],
+    );
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
+  }
 
 
-
- Future _itemFinderData() async{
+  Future _itemFinderData() async{
    var response = await http.post(
      new Uri.https(BASE_URL, API_PATH + "/itemfinder"),
      body: {
@@ -108,13 +143,19 @@ class _ProductsPageState extends State<ProductsPage> {
      throw Exception('Something went wrong');
    }
  }
-  Future _myProfileData() async {
+
+
+  Future _myGroceryData() async {
+    setState(() {
+      restaurant_id = "35";
+    });
     var response = await http.post(
       new Uri.https(BASE_URL, API_PATH + "/products"),
       body: {
-        "user_id": _userId,
+        "user_id" : _userId,
+        "restaurant_id" : "35",
         "category_id": _id,
-        "type": _type,
+        "type" : "",
       },
       headers: {
         "Accept": "application/json",
@@ -134,6 +175,35 @@ class _ProductsPageState extends State<ProductsPage> {
       throw Exception('Something went wrong');
     }
   }
+
+
+  Future _myRestaurantData() async {
+    setState(() {
+      restaurant_id = "41";
+    });
+    var response = await http.post(
+      new Uri.https(BASE_URL, API_PATH + "/products"),
+      body: {
+        "user_id": _userId,
+        "restaurant_id": "41",
+        "category_id": _id,
+        "type": "category"
+      },
+      headers: {
+        "Accept": "application/json",
+        "authorization": basicAuth,
+      },
+    );
+    if (response.statusCode == 200) {
+      var data = json.decode(response.body);
+      var result = data['Response'];
+      return result;
+    } else {
+      throw Exception('Something went wrong');
+    }
+  }
+
+
   Widget _emptyCategories() {
     return Center(
       child: Container(
@@ -162,7 +232,7 @@ class _ProductsPageState extends State<ProductsPage> {
   Widget _profileBuilder() {
     final _cart = Provider.of<CartBadge>(context, listen: false);
     return FutureBuilder(
-      future: _type!=null ?_productList:itemFinderList,
+      future: _type!=null ?_productList : itemFinderList,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
           if(snapshot.data.length!=0) {
@@ -262,61 +332,39 @@ class _ProductsPageState extends State<ProductsPage> {
                                             children: <Widget>[
                                               GestureDetector(
                                                 onTap: () async {
-                                                  setState(() {
-                                                    if (snapshot.data[index]
-                                                    ['quantity'] >=
-                                                        1) {
-                                                      snapshot.data[index]
-                                                      ['quantity']--;
+                                                  int temp = int.parse(snapshot.data[index]['quantity'].toString());
+                                                  if(temp > 0){
+                                                    temp = temp-1;
+                                                    setState(() {
+                                                      snapshot.data[index]['quantity'] = temp.toString();
+                                                    });
+                                                    var response = await http.post(
+                                                      new Uri.https(BASE_URL, API_PATH + "/cart-add"),
+                                                      body: {
+                                                        "user_id": _userId.toString(),
+                                                        "offer_price":snapshot.data[index]['discount'].toString(),
+                                                        "product_id": snapshot.data[index]['id'].toString(),
+                                                        "restaurant_id": "35",
+                                                        "quantity": snapshot.data[index]['quantity'].toString(),
+                                                        "rate": snapshot.data[index]['mrp'].toString(),
+                                                        "amount": (double.parse(snapshot.data[index]['mrp'].toString()) * double.parse(snapshot.data[index]['quantity'].toString())).toString(),
+                                                      },
+                                                      headers: {
+                                                        "Accept":
+                                                        "application/json",
+                                                        "authorization": basicAuth
+                                                      },
+                                                    );
+                                                    if (response.statusCode ==
+                                                        200) {
+                                                      _cart.showCartBadge(_userId);
+                                                      var data = json.decode(response.body);
+                                                      SharedPreferences prefs = await SharedPreferences.getInstance();
+                                                      prefs.setInt('cart_count', int.parse(data['Response']['count'].toString()));
+                                                      print(prefs.getInt('cart_count').toString());
                                                     }
-                                                  });
-                                                  var response = await http
-                                                      .post(
-                                                    new Uri.https(BASE_URL,
-                                                        API_PATH + "/cart-add"),
-                                                    body: {
-                                                      "user_id":
-                                                      _userId.toString(),
-                                                      "offer_price":snapshot
-                                                          .data[index]['discount']
-                                                          .toString(),
-                                                      "product_id": snapshot
-                                                          .data[index]['id']
-                                                          .toString(),
-                                                      "quantity": snapshot
-                                                          .data[index]['quantity']
-                                                          .toString(),
-                                                      "rate": snapshot
-                                                          .data[index]
-                                                      ['mrp']
-                                                          .toString(),
-                                                      "amount": snapshot
-                                                          .data[index]
-                                                      ['quantity'] <
-                                                          1
-                                                          ? 0.toString()
-                                                          : snapshot.data[index]
-                                                      ['mrp'] *
-                                                          snapshot.data[index]
-                                                          ['quantity'],
-                                                    },
-                                                    headers: {
-                                                      "Accept":
-                                                      "application/json",
-                                                      "authorization": basicAuth
-                                                    },
-                                                  );
-                                                  if (response.statusCode ==
-                                                      200) {
-                                                    var data = json.decode(
-                                                        response.body);
-                                                    _cart.showCartBadge(
-                                                        _userId);
-                                                    SharedPreferences prefs = await SharedPreferences
-                                                        .getInstance();
-                                                    prefs.setInt('cart_count',
-                                                        data['Response']['count']);
                                                   }
+
                                                 },
                                                 child: Container(
                                                   height: 25,
@@ -349,53 +397,78 @@ class _ProductsPageState extends State<ProductsPage> {
                                               ),
                                               GestureDetector(
                                                 onTap: () async {
-                                                  setState(() {
-                                                    snapshot.data[index]
-                                                    ['quantity']++;
-                                                  });
-                                                  var response = await http
-                                                      .post(
-                                                    new Uri.https(BASE_URL,
-                                                        API_PATH + "/cart-add"),
-                                                    body: {
-                                                      "user_id":
-                                                      _userId.toString(),
-                                                      "offer_price":snapshot
-                                                          .data[index]['discount']
-                                                          .toString(),
-                                                      "product_id": snapshot
-                                                          .data[index]['id']
-                                                          .toString(),
-                                                      "quantity": snapshot
-                                                          .data[index]['quantity']
-                                                          .toString(),
-                                                      "rate": snapshot
-                                                          .data[index]
-                                                      ['mrp']
-                                                          .toString(),
-                                                      "amount":
-                                                      snapshot.data[index]
-                                                      ['mrp'] *
-                                                          snapshot.data[index]
-                                                          ['quantity'],
-                                                    },
-                                                    headers: {
-                                                      "Accept":
-                                                      "application/json",
-                                                      "authorization": basicAuth
-                                                    },
-                                                  );
-                                                  if (response.statusCode ==
-                                                      200) {
-                                                    _cart.showCartBadge(
-                                                        _userId);
-                                                    var data = json.decode(
-                                                        response.body);
-                                                    SharedPreferences prefs = await SharedPreferences
-                                                        .getInstance();
-                                                    prefs.setInt('cart_count',
-                                                        data['Response']['count']);
-                                                  }
+                                                  SharedPreferences prefs = await SharedPreferences.getInstance();
+                                                   if(prefs.getInt('cart_count') == 0) {
+                                                     prefs.setString('type', "grocery");
+                                                     int temp = int.parse(snapshot.data[index]['quantity'].toString());
+                                                     temp = temp+1;
+                                                     setState(() {
+                                                       snapshot.data[index]['quantity'] = temp.toString();
+                                                     });
+                                                     var response = await http
+                                                         .post(
+                                                       new Uri.https(BASE_URL,
+                                                           API_PATH + "/cart-add"),
+                                                       headers: {"Accept": "application/json", 'Content-Type': 'application/json'},
+                                                       body: jsonEncode({
+                                                         "user_id": _userId.toString(),
+                                                         "offer_price": snapshot.data[index]['discount'].toString(),
+                                                         "rate": snapshot.data[index]['mrp'].toString(),
+                                                         "restaurant_id": "35",
+                                                         "quantity": snapshot.data[index]['quantity'].toString(),
+                                                         "product_id": snapshot.data[index]['id'].toString(),
+                                                         "addon_items" : []
+                                                       }),
+                                                     );
+                                                     if (response.statusCode == 200) {
+                                                       _cart.showCartBadge(_userId);
+                                                       var data = json.decode(response.body);
+                                                       SharedPreferences prefs = await SharedPreferences.getInstance();
+                                                       prefs.setInt('cart_count', int.parse(data['Response']['count'].toString()));
+                                                     }
+                                                   }
+                                                   else{
+                                                     if (prefs.getString('type') == "grocery") {
+                                                       prefs.setString('type', "grocery");
+                                                       int temp = int.parse(snapshot.data[index]['quantity'].toString());
+                                                       temp = temp+1;
+                                                       setState(() {
+                                                         snapshot.data[index]['quantity'] = temp.toString();
+                                                       });
+                                                       var response = await http
+                                                           .post(
+                                                         new Uri.https(BASE_URL,
+                                                             API_PATH + "/cart-add"),
+                                                         headers: {"Accept": "application/json", 'Content-Type': 'application/json'},
+                                                         body: jsonEncode({
+                                                           "user_id": _userId.toString(),
+                                                           "offer_price": snapshot.data[index]['discount'].toString(),
+                                                           "rate": snapshot.data[index]['mrp'].toString(),
+                                                           "restaurant_id": "35",
+                                                           "quantity": snapshot.data[index]['quantity'].toString(),
+                                                           "product_id": snapshot.data[index]['id'].toString(),
+                                                           "addon_items" : []
+                                                         }),
+                                                       );
+                                                       if (response.statusCode ==
+                                                           200) {
+                                                         _cart.showCartBadge(_userId);
+                                                         var data = json.decode(response.body);
+                                                         SharedPreferences prefs = await SharedPreferences.getInstance();
+                                                         prefs.setInt('cart_count', int.parse(data['Response']['count'].toString()));
+                                                       }
+
+                                                     } else {
+                                                       prefs.setString('type', "grocery");
+                                                       showConfirmDialog('Cancel', 'Ok', 'Remove Item',
+                                                           'Please remove or purchase restaurant items from cart after that you can add grocery item',
+                                                           _userId.toString(),
+                                                           snapshot.data[index]['discount'].toString(),
+                                                           snapshot.data[index]['mrp'].toString(),
+                                                           snapshot.data[index]['quantity'].toString(),
+                                                           snapshot.data[index]['id'].toString());
+                                                     }
+                                                   }
                                                 },
                                                 child: Container(
                                                   height: 25,
@@ -767,6 +840,9 @@ class ProductSearch extends SearchDelegate<String> {
       );
     }
   }
+
+
+
 
 
 }

@@ -59,11 +59,9 @@ class _AddAddressPageState extends State<AddAddressHomePage> {
     });
   }
 
-  _getCurrentLocation() async {
-    Position position =
-        await getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-    List<Placemark> placemarks =
-        await placemarkFromCoordinates(position.latitude, position.longitude);
+  /*_getCurrentLocation() async {
+    Position position = await getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
     Placemark place = placemarks[0];
     setState(() {
       _address = place.name +
@@ -75,7 +73,7 @@ class _AddAddressPageState extends State<AddAddressHomePage> {
           place.postalCode;
       addressController = TextEditingController()..text = _address;
     });
-  }
+  }*/
 
   Widget _nameTextbox() {
     return Container(
@@ -342,7 +340,7 @@ class _AddAddressPageState extends State<AddAddressHomePage> {
         color: Colors.green,
         splashColor: Colors.purple,
         onPressed: () {
-          _getCurrentLocation();
+          //_getCurrentLocation();
         },
       ),
     );

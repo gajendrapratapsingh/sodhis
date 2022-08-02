@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:sodhis_app/constants.dart';
 import 'package:flutter/services.dart';
@@ -6,6 +7,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/gestures.dart';
 import 'package:sodhis_app/utilities/basic_auth.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 
@@ -32,15 +34,20 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget _welcomeText() {
     return Container(
-      padding: const EdgeInsets.only(left: 30),
-      child: Text(
-        "Welcome to 7mirchi's Mart!",
-        style: TextStyle(color: Colors.white, fontSize: 18),
+      padding: const EdgeInsets.only(left: 0),
+      child: Column(
+        children: [
+          Text(
+            "Welcome",
+            style: GoogleFonts.poppins(color: Colors.white, fontSize: 20),
+          ),
+          Text("7mirchi's Mart!", style: GoogleFonts.poppins(color: Colors.white, fontSize: 35, fontWeight: FontWeight.w600))
+        ],
       ),
     );
   }
 
-  Widget _signinText() {
+  /*Widget _signinText() {
     return Container(
       padding: const EdgeInsets.only(top: 20, left: 30),
       child: Text(
@@ -48,7 +55,7 @@ class _LoginPageState extends State<LoginPage> {
         style: TextStyle(color: Colors.white, fontSize: 24),
       ),
     );
-  }
+  }*/
 
   Widget _mobileTextbox() {
     return Container(
@@ -120,14 +127,14 @@ class _LoginPageState extends State<LoginPage> {
           child: RaisedButton(
 
             onPressed: () async {
+              print(BASE_URL+API_PATH + "/app-login");
               if (_formKey.currentState.validate()) {
                 _formKey.currentState.save();
                 setState(() {
                   _loading = true;
                 });
-                var response = await http.post(
-                  new Uri.https(BASE_URL, API_PATH + "/app-login"),
-                  body: {
+                  var response = await http.post(new Uri.https(BASE_URL, API_PATH + "/app-login"),
+                    body: {
                     "mobile_number": mobileController.text,
                     "pin": pinController.text
                   },
@@ -137,6 +144,7 @@ class _LoginPageState extends State<LoginPage> {
                   },
                 );
                 if (response.statusCode == 200) {
+                  print(response.body);
                   setState(() {
                     _loading = false;
                   });
@@ -151,13 +159,12 @@ class _LoginPageState extends State<LoginPage> {
                     prefs.setInt('cart_count', 0);
                     prefs.setInt('user_id', data['Response']['id']);
                     prefs.setString('name', data['Response']['name']);
-                    prefs.setString(
-                        'email_address', data['Response']['email_address']);
-                    prefs.setString(
-                        'mobile_number', data['Response']['mobile_number']);
+                    prefs.setString('email_address', data['Response']['email_address']);
+                    prefs.setString('mobile_number', data['Response']['mobile_number']);
                     prefs.setString('address', data['Response']['address']);
                     Navigator.pushReplacementNamed(context, '/dashboard');
                   } else {
+                    print(response.body);
                     showAlertDialog(context, ALERT_DIALOG_TITLE, errorMessage);
                   }
                 }
@@ -227,25 +234,42 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF372D61),
+      backgroundColor:
+      Colors.teal,
       body: ModalProgressHUD(
         inAsyncCall: _loading,
         child: SafeArea(
           child: Container(
+            // decoration: BoxDecoration(
+            //    gradient: LinearGradient(
+            //        begin: Alignment.topCenter,
+            //        end: Alignment.bottomCenter,
+            //        colors: [Color(0xff1f4037), Color(0xff99f2c8)],
+            //        tileMode: TileMode.mirror),
+            // ),
             child: Column(
               children: <Widget>[
                 Expanded(
-                  flex: 3,
+                  flex: 5,
                   child: Center(
                     child: ListView(shrinkWrap: true, children: <Widget>[
                       _welcomeText(),
-                      _signinText(),
+                      //_signinText(),
+                      Padding(
+                          padding: EdgeInsets.only(left: 10, top: 20, right: 10),
+                          child: Container(
+                            height: 120,
+                            width: double.infinity,
+                            child: Image.asset('assets/images/logo.png', fit: BoxFit.cover,),
+                          )
+                      )
                     ]),
                   ),
                 ),
                 Expanded(
-                  flex: 7,
+                  flex: 4,
                   child: Container(
+                    height: MediaQuery.of(context).size.height,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.rectangle,

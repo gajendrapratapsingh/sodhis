@@ -74,6 +74,7 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
                 child: ListView.builder(
                   shrinkWrap: true,
                   primary: false,
+                  padding: EdgeInsets.zero,
                   itemCount: response.length,
                   itemBuilder: (context, index) {
                     return Column(
@@ -87,70 +88,68 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
                               context,
                               '/order-details',
                               arguments: <String, String>{
-                                'order_id':
-                                response[index]['id'].toString(),
+                                'order_id': response[index]['id'].toString(),
                               },
                             );
                           },
                           child: Container(
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(15, 5, 15, 0),
-                              child: Container(
-                                color: Color(0xFFf2f2f2),
-                                child: Padding(
-                                    padding:
-                                        const EdgeInsets.fromLTRB(15, 0, 15, 0),
-                                    child: Column(children: <Widget>[
-                                      SizedBox(
-                                        height: 8,
-                                      ),
-                                      response[index].containsKey("order_date")
-                                          ? Container(
-                                              alignment: Alignment.bottomLeft,
-                                              child: Text(
-                                                'Order Date: ' +
-                                                    response[index]['order_date'],
-                                                style: TextStyle(
-                                                    fontSize: 12.0,
-                                                    color: Colors.black),
-                                              ),
-                                            )
-                                          : Text(""),
-                                      SizedBox(
-                                        height: 5,
-                                      ),
-                                      response[index].containsKey("title")
-                                          ? Container(
-                                              alignment: Alignment.bottomLeft,
-                                              child: Text(
-                                                response[index]['title'],
-                                                style: TextStyle(
-                                                    fontSize: 14.0,
-                                                    color: Colors.grey[800]),
-                                              ),
-                                            )
-                                          : Text(""),
-                                      SizedBox(
-                                        height: 5,
-                                      ),
-                                      response[index].containsKey("total")
-                                          ? Container(
-                                              alignment: Alignment.bottomLeft,
-                                              child: Text(
-                                                'Rs ' + response[index]['total'],
-                                                style: TextStyle(
-                                                    fontSize: 14.0,
-                                                    color: Colors.grey[800]),
-                                              ),
-                                            )
-                                          : Text(""),
-                                      SizedBox(
-                                        height: 8,
-                                      ),
-                                    ]),
+                            height: 120,
+                            width: double.infinity,
+                            child: Card(
+                               elevation: 4.0,
+                               child: Container(
+                                  decoration: BoxDecoration(
+                                     color: Colors.white,
+                                     borderRadius: BorderRadius.all(Radius.circular(8.0))
                                   ),
-
-                              ),
+                                 child: Padding(
+                                   padding: const EdgeInsets.all(10.0),
+                                   child: Column(
+                                     children: [
+                                        Align(
+                                           alignment: Alignment.topLeft,
+                                           child: Text(
+                                               response[index]['order_date'].toString(),
+                                               style: TextStyle(color: Colors.black, fontSize: 16.0, fontWeight: FontWeight.bold)
+                                           ),
+                                        ),
+                                        SizedBox(height: 10),
+                                        Divider(
+                                           color: Colors.grey,
+                                           height: 1,
+                                        ),
+                                        SizedBox(height: 10),
+                                        Row(
+                                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                           children: [
+                                              Column(
+                                                 mainAxisAlignment: MainAxisAlignment.start,
+                                                 crossAxisAlignment: CrossAxisAlignment.start,
+                                                 children: [
+                                                    Text("Total Items", style: TextStyle(color: Colors.grey, fontSize: 16.0)),
+                                                    SizedBox(height: 4.0),
+                                                    Text(response[index]['total_items'].toString(), textAlign: TextAlign.start, style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600, fontSize: 18.0)),
+                                                 ],
+                                              ),
+                                              Column(
+                                                mainAxisAlignment: MainAxisAlignment.start,
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                               children: [
+                                                 Text("Total Amount", style: TextStyle(color: Colors.grey, fontSize: 16.0)),
+                                                 SizedBox(height: 4.0),
+                                                 Text(
+                                                     "\u20B9 "+response[index]['total'].toString(),
+                                                     style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600, fontSize: 18.0)
+                                                 ),
+                                               ],
+                                             ),
+                                             Icon(Icons.arrow_forward_ios, size: 16, color: Colors.red)
+                                           ],
+                                        )
+                                     ],
+                                   ),
+                                 ),
+                               ),
                             ),
                           ),
                         ),
@@ -170,20 +169,30 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
     );
   }
 
+  Widget _getStatus(String statusvalue){
+    if(statusvalue == "1"){
+       return Text("New", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 16.0, fontWeight: FontWeight.w700));
+    }
+
+  }
+
   Widget build(BuildContext context) {
     return WillPopScope(
         child: Scaffold(
           appBar: AppBar(
             title: Text('My Orders'),
+            /*leading: InkWell(
+               onTap: () => Navigator.of(context).pushNamedAndRemoveUntil('/multislider-home', (route) => false),
+               child: Icon(Icons.arrow_back, color: Colors.white, size: 24.0),
+            ),*/
           ),
           body: Container(
             child: _myOrdersBuilder(),
           ),
-        ), 
-        onWillPop: () async{
-           return Navigator.pushReplacement(context,
-               MaterialPageRoute(builder: (context) => DashboardPage()));
-        }
-    );
+        ),
+        onWillPop: () async {
+          return Navigator.pushReplacement(context,
+              MaterialPageRoute(builder: (context) => DashboardPage()));
+        });
   }
 }

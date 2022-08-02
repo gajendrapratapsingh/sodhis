@@ -82,26 +82,26 @@ class _LocationPageState extends State<LocationPage> {
                     title: Text(snapshot.data[index]['address']),
                     leading: Icon(Icons.location_on),
                   ),
-                  Container(
-                    padding: const EdgeInsets.only(top: 15, bottom: 15),
-                    child: OutlineButton.icon(
-                      icon: Icon(
-                        Icons.location_searching,
-                      ),
-                      label: Text(
-                        'Get Direction',
-                        style: TextStyle(
-                            //color: Color(0xFF372D61),
-                            ),
-                      ),
-                      onPressed: () {
-                        var _name = snapshot.data[index]['name'];
-                        var _address = snapshot.data[index]['address'];
-                        var _finaladdress = _name + ', ' + _address;
-                        MapsLauncher.launchQuery(_finaladdress);
-                      },
-                    ),
-                  ),
+                  // Container(
+                  //   padding: const EdgeInsets.only(top: 15, bottom: 15),
+                  //   child: OutlineButton.icon(
+                  //     icon: Icon(
+                  //       Icons.location_searching,
+                  //     ),
+                  //     label: Text(
+                  //       'Get Direction',
+                  //       style: TextStyle(
+                  //           //color: Color(0xFF372D61),
+                  //           ),
+                  //     ),
+                  //     onPressed: () {
+                  //       var _name = snapshot.data[index]['name'];
+                  //       var _address = snapshot.data[index]['address'];
+                  //       var _finaladdress = _name + ', ' + _address;
+                  //       MapsLauncher.launchQuery(_finaladdress);
+                  //     },
+                  //   ),
+                  // ),
                 ],
               );
             },

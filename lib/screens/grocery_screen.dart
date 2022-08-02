@@ -1,35 +1,27 @@
+import 'dart:convert';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
 import 'package:marquee_widget/marquee_widget.dart';
-import 'package:sodhis_app/components/AnimatedToggle.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sodhis_app/components/ThemeColor.dart';
 import 'package:sodhis_app/constants.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:async';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'dart:convert';
-import 'package:sodhis_app/Animation/FadeAnimation.dart';
-// import 'package:barcode_scan/barcode_scan.dart';
-import 'package:http/http.dart' as http;
-import 'package:sodhis_app/screens/grocery_new_screen.dart';
-import 'package:sodhis_app/screens/grocery_screen.dart';
-import 'package:sodhis_app/screens/restaurant_screen.dart';
-import 'package:sodhis_app/utilities/basic_auth.dart';
 import 'package:sodhis_app/screens/webview.dart';
-import 'package:badges/badges.dart';
-import 'package:provider/provider.dart';
-import 'package:sodhis_app/services/cart_badge.dart';
+import 'package:sodhis_app/utilities/basic_auth.dart';
 
-class HomePageMultislider extends StatefulWidget {
+class GroceryScreen extends StatefulWidget {
+  const GroceryScreen({Key key}) : super(key: key);
+
   @override
-  _HomePageState createState() => _HomePageState();
+  _GroceryScreenState createState() => _GroceryScreenState();
 }
 
-class _HomePageState extends State<HomePageMultislider>
-    with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
+class _GroceryScreenState extends State<GroceryScreen> with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin{
+
   var _userId;
   var deliveryType = "";
   var errorCode;
@@ -46,28 +38,6 @@ class _HomePageState extends State<HomePageMultislider>
   bool isToggle = false;
   AnimationController _animationController;
   String pickUp = "takeaway";
-
-/*
-
-  Future scan() async {
-    var options = ScanOptions(
-      strings: {
-        "cancel": 'Cancel',
-        "flash_on": 'Flash on',
-        "flash_off": 'Flash off',
-      },
-      useCamera: -1,
-      android: AndroidOptions(
-        useAutoFocus: true,
-      ),
-    );
-
-    var result = await BarcodeScanner.scan(options: options);
-    if (result.type.toString() == 'Barcode') {
-      Navigator.pushNamed(context, '/store');
-    }
-  }
-*/
 
   @override
   void initState() {
@@ -99,6 +69,160 @@ class _HomePageState extends State<HomePageMultislider>
     });
   }
 
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+       body: Column(
+          children: <Widget>[
+            SizedBox(
+              height: 1,
+            ),
+            /*Center(
+              child: AnimatedToggle(
+                values: ['Take Away', 'Home Delivery'],
+                textColor: lightMode.textColor,
+                backgroundColor: lightMode.toggleBackgroundColor,
+                buttonColor: lightMode.toggleButtonColor,
+                borderColor: lightMode.borderColor,
+                shadows: lightMode.shadow,
+                onToggleCallback: (index) async {
+                  isToggle = !isToggle;
+                  SharedPreferences prefs = await SharedPreferences.getInstance();
+                  if (isToggle) {
+                    pickUp = "home_delivery";
+                    prefs.setString('delivery_type', pickUp);
+                    //  Navigator.of(context).pop();
+                    Navigator.pushNamed(
+                      context,
+                      '/addnewaddress',
+                    );
+                  } else {
+                    pickUp = "takeaway";
+                    prefs.setString('delivery_type', pickUp);
+                  }
+                  print(pickUp);
+                  setState(() {});
+                },
+              ),
+            ),*/
+
+            Expanded(
+              child: ListView(
+                  children: <Widget>[ Container(
+                    color: Color(0xFFeeeeee),
+                    alignment: Alignment.topCenter,
+                    child: _dashboardBannersBuilder(),
+                  ),
+                  ]
+              ),
+            ),
+          ],
+        ),
+        drawer: Drawer(
+            child: ListView(children: <Widget>[
+              Column(
+                children: <Widget>[
+                  new UserAccountsDrawerHeader(
+                    currentAccountPicture: CircleAvatar(
+                      backgroundColor: Colors.white,
+                      child: Text(
+                        "$_shortName".toUpperCase(),
+                        style: TextStyle(fontSize: 40.0),
+                      ),
+                    ),
+                    // onDetailsPressed: () {
+
+                    // },
+                    accountName: new Text("$_name".toUpperCase()),
+                    accountEmail: new Text("$_email_address"),
+                  ),
+                  ListTile(
+                      leading: new Icon(Icons.location_on),
+                      title: Text(_address != null ? _address : ""),
+                      trailing:
+                      _gpsButton() /*GestureDetector(
+                onTap:  _getCurrentLocation(),
+                  child: new Icon(Icons.my_location,color: Colors.red,)),*/
+                  ),
+                  Divider(height: 1),
+                  ListTile(
+                    leading: new Icon(Icons.location_city),
+                    title: Text('Add New Address'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.pushNamed(
+                        context,
+                        '/addnewaddress',
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: new Icon(Icons.store),
+                    title: Text('About Us'),
+                    onTap: _openWebview,
+                  ),
+
+                  ListTile(
+                    leading: new Icon(Icons.person),
+                    title: Text('My Profile'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.pushNamed(
+                        context,
+                        '/my-profile',
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: new Icon(Icons.card_giftcard),
+                    title: Text('My Orders'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.pushNamed(
+                        context,
+                        '/my-orders',
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: new Icon(Icons.feedback),
+                    title: Text('Feedback'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.pushNamed(
+                        context,
+                        '/feedback',
+                      );
+                    },
+                  ),
+                  //Divider(height: 1),
+                  ListTile(
+                    leading: new Icon(Icons.lock_open),
+                    title: Text('Change PIN'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.pushNamed(
+                        context,
+                        '/change-pin',
+                      );
+                    },
+                  ),
+                  Divider(height: 1),
+                  ListTile(
+                    leading: new Icon(Icons.exit_to_app),
+                    title: Text('Logout'),
+                    onTap: () async {
+                      SharedPreferences prefs = await SharedPreferences
+                          .getInstance();
+                      //prefs.remove('logged_in');
+                      prefs.clear();
+                      Navigator.pushReplacementNamed(context, '/login');
+                    },
+                  ),
+                ],
+              ),
+            ])),);
+  }
 
   void _openWebview() {
     Navigator.of(context).pop();
@@ -113,23 +237,30 @@ class _HomePageState extends State<HomePageMultislider>
     );
   }
 
-  Future _dashboardBanners() async {
-    var response = await http.post(
-        new Uri.https(BASE_URL, API_PATH + "/sliderfinder"),
-        body: {"user_id": _userId, "store_id": "35"},
-        headers: {"Accept": "application/json", "authorization": basicAuth});
-    if (response.statusCode == 200) {
-      var data = json.decode(response.body);
-      var result = data['Response'];
-      print(data);
-      return data;
-    } else {
-      throw Exception('Something went wrong');
-    }
-  }
+  ThemeColor lightMode = ThemeColor(
+    /* gradient: [
+      const Color(0xDDFF0080),
+      const Color(0xDDFF8C00),
+    ],*/
+    backgroundColor: const Color(0xFFFFFFFF),
+    textColor: const Color(0xFF000000),
+    toggleButtonColor: const Color(0xFFFFFFFF),
+    toggleBackgroundColor: const Color(0xDDFF8C00),
+    borderColor: const Color(0xDDFF8C00),
+    shadow: const [
+      BoxShadow(
+        color: const Color(0xFFd8d7da),
+        spreadRadius: 5,
+        blurRadius: 10,
+        offset: Offset(0, 5),
+      ),
+    ],
+  );
 
   Widget _dashboardBannersBuilder() {
-    final orientation = MediaQuery.of(context).orientation;
+    final orientation = MediaQuery
+        .of(context)
+        .orientation;
     return FutureBuilder(
       future: _mydashboardBanner,
       builder: (context, snapshot) {
@@ -225,50 +356,50 @@ class _HomePageState extends State<HomePageMultislider>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
 
-                        GestureDetector(
-                          onTap: () {
-                            print(
-                                snapshot.data['CategoryResponse'][index]['id']);
-                            Navigator.pushNamed(
-                              context,
-                              '/products',
-                              arguments: <String, String>{
-                                'id': snapshot.data['CategoryResponse'][index]
-                                ['id']
-                                    .toString(),
-                                'title': snapshot.data['CategoryResponse']
-                                [index]['name'],
-                                'type': 'category',
-                              },
-                            );
-                          },
-                          child: Text(
-                            snapshot.data['CategoryResponse'][index]['name'],
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey[700],
-                                fontSize: 16,
-                                decoration: TextDecoration.underline),
-                          ),
+                      GestureDetector(
+                        onTap: () {
+                          print(
+                              snapshot.data['CategoryResponse'][index]['id']);
+                          Navigator.pushNamed(
+                            context,
+                            '/products',
+                            arguments: <String, String>{
+                              'id': snapshot.data['CategoryResponse'][index]
+                              ['id']
+                                  .toString(),
+                              'title': snapshot.data['CategoryResponse']
+                              [index]['name'],
+                              'type': 'category',
+                            },
+                          );
+                        },
+                        child: Text(
+                          snapshot.data['CategoryResponse'][index]['name'],
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[700],
+                              fontSize: 16,
+                              decoration: TextDecoration.underline),
                         ),
+                      ),
 
                       SizedBox(
                         height: 15,
                       ),
-                          Container(
-                            height: 120,
-                            child: ListView(
-                              scrollDirection: Axis.horizontal,
-                              children: <Widget>[
-                                for (var i in snapshot.data['CategoryResponse']
-                                [index]['subcategories'])
-                                  makeItem(
-                                      id: i['id'].toString(),
-                                      image: i['image'],
-                                      title: i['name']),
-                              ],
-                            ),
-                          ),
+                      Container(
+                        height: 120,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          children: <Widget>[
+                            for(var i in snapshot.data['CategoryResponse']
+                            [index]['subcategories'])
+                              makeItem(
+                                  id: i['id'].toString(),
+                                  image: i['image'],
+                                  title: i['name']),
+                          ],
+                        ),
+                      ),
                       SizedBox(
                         height: 15,
                       ),
@@ -284,7 +415,7 @@ class _HomePageState extends State<HomePageMultislider>
             ListView.builder(
               primary: false,
               shrinkWrap: true,
-              itemCount: snapshot.data['OfferResponse'].length,
+              itemCount: snapshot.data['SliderResponse'].length,
               itemBuilder: (context, index) {
                 return Container(
                   decoration: BoxDecoration(
@@ -968,8 +1099,7 @@ class _HomePageState extends State<HomePageMultislider>
                     enlargeCenterPage: true,
                     scrollDirection: Axis.horizontal,
                   ),
-                  itemCount: snapshot
-                      .data['SliderResponse'][1]['slider_options'].length,
+                  itemCount: snapshot.data['SliderResponse'][1]['slider_options'].length,
                   itemBuilder: (BuildContext context, int itemIndex) {
                     return GestureDetector(
                       onTap: () {
@@ -1033,6 +1163,20 @@ class _HomePageState extends State<HomePageMultislider>
     );
   }
 
+  Future _dashboardBanners() async {
+    var response = await http.post(
+        new Uri.https(BASE_URL, API_PATH + "/sliderfinder"),
+        body: {"user_id": _userId, "store_id" : "35"},
+        headers: {"Accept": "application/json", "authorization": basicAuth});
+    if (response.statusCode == 200) {
+      var data = json.decode(response.body);
+      var result = data['Response'];
+      return data;
+    } else {
+      throw Exception('Something went wrong');
+    }
+  }
+
   Widget _networkImage(url) {
     return Stack(
         children: <Widget>[ ClipRRect(
@@ -1069,271 +1213,6 @@ class _HomePageState extends State<HomePageMultislider>
     );
   }
 
-  Widget _cartWithoutBadge() {
-    return IconButton(
-      icon: const Icon(Icons.shopping_basket),
-      onPressed: () {
-        Navigator.pushNamed(context, '/checkout-new');
-      },
-    );
-  }
-
-  Widget _emptyCategories() {
-    return Center(
-      child: Container(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            Container(
-              // height: 150,
-              // width: 150,
-              margin: const EdgeInsets.only(bottom: 20),
-              child: Image.asset("assets/images/empty.png"),
-            ),
-            Text(
-              "Sorry No Products Available!",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(
-                  left: 30, right: 30, top: 10, bottom: 80),
-              child: Text(
-                "Move to specific store location to get Products.",
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _productCategoriesBuilder() {
-    return FutureBuilder(
-      future: _myproductCategories,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
-          //  product_error = snapshot.data['ErrorCode'];
-          // if(product_error == 0) {
-          return ListView.builder(
-            shrinkWrap: true,
-            itemCount: snapshot.data.length,
-            itemBuilder: (context, index) {
-              return Container(
-                padding: EdgeInsets.symmetric(horizontal: 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-
-                      GestureDetector(
-                        onTap: () {
-                          print(snapshot.data[index]['id']);
-                          Navigator.pushNamed(
-                            context,
-                            '/products',
-                            arguments: <String, String>{
-                              'id': snapshot.data[index]['id'].toString(),
-                              'title': snapshot.data[index]['name'],
-                              'type': 'category',
-                            },
-                          );
-                        },
-                        child: Text(
-                          snapshot.data[index]['name'],
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey[700],
-                              fontSize: 16,
-                              decoration: TextDecoration.underline),
-                        ),
-                      ),
-
-                    SizedBox(
-                      height: 10,
-                    ),
-                        Container(
-                          height: 100,
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            children: <Widget>[
-                              for (var i in snapshot.data['CategoryResponse']
-                              [index]['subcategories'])
-                                makeItem(
-                                    id: i['id'].toString(),
-                                    image: i['image'],
-                                    title: i['name']),
-                            ],
-                          ),
-                        ),
-                    SizedBox(
-                      height: 10,
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
-          /* }
-          else{
-            return Container(
-                color: Colors.white,
-                child: _emptyCategories());
-          }*/
-        } else {
-          return Center(child: CircularProgressIndicator());
-        }
-      },
-    );
-  }
-
-
-  Widget makeItemsSlider({id, image, title}) {
-    return AspectRatio(
-      aspectRatio: 1 / 1,
-      child: GestureDetector(
-        onTap: () {
-          Navigator.pushNamed(
-            context,
-            '/products',
-            arguments: <String, String>{
-              'id': id,
-              'title': title,
-              'type': 'subcategory',
-            },
-          );
-        },
-        child: Column(children: <Widget>[
-          Expanded(
-            child: Container(
-                height: 100,
-                margin: EdgeInsets.only(right: 10, bottom: 8, left: 10),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(10.0),
-                      topRight: Radius.circular(10.0),
-                      bottomLeft: Radius.circular(10),
-                      bottomRight: Radius.circular(10.0)),
-                  image: DecorationImage(
-                    image: CachedNetworkImageProvider(image),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                child: Container() /**/
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Container(
-              margin: EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Color(0xFFc62714),
-                borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(10.0),
-                    topRight: Radius.circular(10.0),
-                    bottomLeft: Radius.circular(10),
-                    bottomRight: Radius.circular(10.0)),
-              ),
-              child: Align(
-                alignment: Alignment.center,
-                child: Text(
-                  title,
-                  style: TextStyle(color: Colors.white, fontSize: 14),
-                ),
-              ),
-            ),
-          ),
-        ]),
-      ),
-    );
-  }
-
-  Widget makeItem({id, image, title}) {
-    return AspectRatio(
-      aspectRatio: 1 / 1,
-      child: GestureDetector(
-        onTap: () {
-          Navigator.pushNamed(
-            context,
-            '/products',
-            arguments: <String, String>{
-              'id': id,
-              'title': title,
-              'type': 'subcategory',
-            },
-          );
-        },
-        child: Column(
-          children: <Widget>[ Container(
-            height: 90,
-            margin: EdgeInsets.only(right: 15, bottom: 8),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(20.0),
-                  topRight: Radius.circular(20.0),
-                  bottomLeft: Radius.circular(0),
-                  bottomRight: Radius.circular(20.0)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.red.withOpacity(0.5),
-                  spreadRadius: 2,
-                  blurRadius: 4,
-                  offset: Offset(4, 4), // changes position of shadow
-                ),
-              ],
-              //image: CachedNetworkImageProvider(image),
-              image: DecorationImage(
-                image: CachedNetworkImageProvider(image),
-                fit: BoxFit.cover,
-              ),
-            ),
-            //image: DecorationImage(image: AssetImage(image), fit: BoxFit.cover)),
-            child: Container(
-              padding: EdgeInsets.all(5),
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(20.0),
-                      topRight: Radius.circular(20.0),
-                      bottomLeft: Radius.circular(0),
-                      bottomRight: Radius.circular(20.0)),
-                  gradient: LinearGradient(begin: Alignment.bottomRight, colors: [
-                    Colors.black.withOpacity(.8),
-                    Colors.black.withOpacity(.2),
-                  ])),
-              child: Container()/*Align(
-                alignment: Alignment.bottomLeft,
-                child: Text(
-                  title,
-                  style: TextStyle(color: Colors.white, fontSize: 14),
-                ),
-              ),*/
-            ),
-          ),
-           SizedBox(height: 5,),
-           Container(
-             margin: EdgeInsets.only(right: 20),
-             child: Align(
-                  alignment: Alignment.bottomLeft,
-                  child: Marquee(
-                    textDirection : TextDirection.ltr,
-                    child: Text(
-                      title,
-                      maxLines: 2,
-                      style: TextStyle(color: Colors.black, fontSize: 14),
-                    ),
-                  ),
-                ),
-           ),
-
-          ]
-        ),
-      ),
-    );
-  }
-
   Widget _gpsButton() {
     return Container(
       margin: new EdgeInsets.only(right: 15),
@@ -1352,304 +1231,101 @@ class _HomePageState extends State<HomePageMultislider>
   }
 
   /*_getCurrentLocation() async {
-    Position position =
-    await getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    Position position = await getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
     List<Placemark> placemarks =
     await placemarkFromCoordinates(position.latitude, position.longitude);
     Placemark place = placemarks[0];
     setState(() {
       _address =
           place.name +
-          ', ' +
-          place.subLocality +
-          ', ' +
-          place.locality +
-          ' - ' +
-          place.postalCode;
+              ', ' +
+              place.subLocality +
+              ', ' +
+              place.locality +
+              ' - ' +
+              place.postalCode;
     });
-    _myStore = _storeFuture(position.latitude, position.longitude);
+    //_myStore = _storeFuture(position.latitude, position.longitude);
   }*/
 
-  ThemeColor lightMode = ThemeColor(
-    /* gradient: [
-      const Color(0xDDFF0080),
-      const Color(0xDDFF8C00),
-    ],*/
-    backgroundColor: const Color(0xFFFFFFFF),
-    textColor: const Color(0xFF000000),
-    toggleButtonColor: const Color(0xFFFFFFFF),
-    toggleBackgroundColor: const Color(0xDDFF8C00),
-    borderColor: const Color(0xDDFF8C00),
-    shadow: const [
-      BoxShadow(
-        color: const Color(0xFFd8d7da),
-        spreadRadius: 5,
-        blurRadius: 10,
-        offset: Offset(0, 5),
-      ),
-    ],
-  );
-
-  Future _storeFuture(double latitude, double longitude) async {
-    print(latitude.toString());
-    print(longitude.toString());
-    var response = await http.post(
-      new Uri.https(BASE_URL, API_PATH + "/restaurentlocator"),
-      body: {
-        "user_id": _userId,
-        "lat": latitude.toString(),
-        "long": longitude.toString()
-      },
-      headers: {
-        "Accept": "application/json",
-        "authorization": basicAuth,
-      },
-    );
-    if (response.statusCode == 200) {
-      var data = json.decode(response.body);
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      if(data['ErrorCode']==0) {
-
-        prefs.setString("takeAwayAddress",
-            data["Response"][0]['name'] + "-" + data["Response"][0]['address']);
-      }
-      else{
-        prefs.setString("takeAwayAddress","No Address Found");
-      }
-      return data;
-    } else {
-      throw Exception('Something went wrong');
-    }
-  }
-  Widget _title() {
-    return Text(
-      "7Mirchi",
-      style: TextStyle(color: Colors.white),
-    );
-
-  }
-  Widget _storeFutureBuilder() {
-    return FutureBuilder(
-      future: _myStore,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
-          errorCode = snapshot.data['ErrorCode'];
-          if (errorCode == 0) {
-            return Column(children: [
-              Text(
-                "Near by Shop",
-                style: TextStyle(color: Colors.white, fontSize: 15),
-              ),
-              SizedBox(
-                height: 5,
-              ),
-              Marquee(
-                  child: snapshot.data["Response"][0].containsKey('name')?Text(
-                    snapshot.data["Response"][0]['name']+"-"+snapshot.data["Response"][0]['address'],
-                    style:  TextStyle(color: Colors.white, fontSize: 12),
-                    textDirection : TextDirection.rtl,
-                  ):Text(
-                    "No address found",
-                    style: TextStyle(color: Colors.white, fontSize: 12),
-                  ),),
-           /*  Text(
-                  snapshot.data["Response"][0]['name']+"-"+snapshot.data["Response"][0]['address'],
-                  style: TextStyle(color: Colors.white, fontSize: 12),
-                ),*/
-
-            ]);
-          } else {
-            return Column(children: [
-              Text(
-                "Near by Shop",
-                style: TextStyle(color: Colors.white, fontSize: 15),
-              ),
-              SizedBox(
-                height: 5,
-              ),
-              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                GestureDetector(
-                  child: Text(
-                    snapshot.data["ErrorMessage"],
-                    style: TextStyle(color: Colors.white, fontSize: 12),
+  Widget makeItem({id, image, title}) {
+    return AspectRatio(
+      aspectRatio: 1 / 1,
+      child: GestureDetector(
+        onTap: () {
+          Navigator.pushNamed(
+            context,
+            '/products',
+            arguments: <String, String>{
+              'id': id,
+              'title': title,
+              'type': 'subcategory',
+            },
+          );
+        },
+        child: Column(
+            children: <Widget>[ Container(
+              height: 90,
+              margin: EdgeInsets.only(right: 15, bottom: 8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20.0),
+                    topRight: Radius.circular(20.0),
+                    bottomLeft: Radius.circular(0),
+                    bottomRight: Radius.circular(20.0)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.red.withOpacity(0.5),
+                    spreadRadius: 2,
+                    blurRadius: 4,
+                    offset: Offset(4, 4), // changes position of shadow
                   ),
+                ],
+                //image: CachedNetworkImageProvider(image),
+                image: DecorationImage(
+                  image: CachedNetworkImageProvider(image),
+                  fit: BoxFit.cover,
                 ),
-                //SizedBox(width: 5,),const Icon(Icons.edit,size: 12,),
-              ])
-            ]);
-          }
-        } else {
-          return Center(child: CircularProgressIndicator());
-        }
-      },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final _counter = Provider.of<CartBadge>(context);
-    _counter.showCartBadge(_userId);
-    super.build(context);
-    // print("test");
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        backgroundColor: Colors.grey[300],
-        //extendBodyBehindAppBar: true,
-        appBar: AppBar(
-            centerTitle: true,
-              title: _title(),
-            //title: _storeFutureBuilder(),
-            bottom: TabBar(
-              tabs: [
-                Tab(text: "Restaurant"),
-                Tab(text: "Grocery"),
-              ],
-            ),
-            actions: <Widget>[
-              _counter.isLoading()
-                  ? _cartWithoutBadge()
-                  : IconButton(
-                icon: Badge(
-                  animationDuration: Duration(milliseconds: 10),
-                  animationType: BadgeAnimationType.scale,
-                  badgeContent: Text(
-                    '${_counter.getCounter()}',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  child: const Icon(Icons.shopping_basket),
-                ),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/checkout-new');
-                 // Navigator.pushNamed(context, '/cart');
-                },
               ),
-              IconButton(
-                  icon: const Icon(Icons.notifications),
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/notifications');
-                  }),
-            ],
-            iconTheme: IconThemeData(
-              color: Colors.white,
+              //image: DecorationImage(image: AssetImage(image), fit: BoxFit.cover)),
+              child: Container(
+                  padding: EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(20.0),
+                          topRight: Radius.circular(20.0),
+                          bottomLeft: Radius.circular(0),
+                          bottomRight: Radius.circular(20.0)),
+                      gradient: LinearGradient(begin: Alignment.bottomRight, colors: [
+                        Colors.black.withOpacity(.8),
+                        Colors.black.withOpacity(.2),
+                      ])),
+                  child: Container()/*Align(
+                alignment: Alignment.bottomLeft,
+                child: Text(
+                  title,
+                  style: TextStyle(color: Colors.white, fontSize: 14),
+                ),
+              ),*/
+              ),
             ),
-            //backgroundColor: Colors.transparent,
-            elevation: 0),
-        body: TabBarView(
-          children: [
-            RestaurantScreen(),
-            GroceryNewScreen(),
-
-            /*Center(
-              child: Image.asset('assets/images/commingsoon.png', scale: 4)
-            )*/
-          ],
-        ),
-        drawer: new Drawer(
-          child: ListView(children: <Widget>[
-            Column(
-              children: <Widget>[
-                new UserAccountsDrawerHeader(
-                  currentAccountPicture: CircleAvatar(
-                    backgroundColor: Colors.white,
+              SizedBox(height: 5),
+              Container(
+                margin: EdgeInsets.only(right: 20),
+                child: Align(
+                  alignment: Alignment.bottomLeft,
+                  child: Marquee(
+                    textDirection : TextDirection.ltr,
                     child: Text(
-                      "$_shortName".toUpperCase(),
-                      style: TextStyle(fontSize: 40.0),
+                      title,
+                      maxLines: 2,
+                      style: TextStyle(color: Colors.black, fontSize: 14),
                     ),
                   ),
-                  // onDetailsPressed: () {
+                ),
+              ),
 
-                  // },
-                  accountName: new Text("$_name".toUpperCase()),
-                  accountEmail: new Text("$_email_address"),
-                ),
-                ListTile(
-                      leading: new Icon(Icons.location_on),
-                      title: Text(_address != null ? _address : ""),
-                      trailing: _gpsButton(),
-                      onTap: (){
-                       //_getCurrentLocation();
-                     },
-                ),
-                Divider(height: 1),
-                ListTile(
-                  leading: new Icon(Icons.location_city),
-                  title: Text('Add New Address'),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    Navigator.pushNamed(
-                      context,
-                      '/addnewaddress',
-                    );
-                  },
-                ),
-                ListTile(
-                  leading: new Icon(Icons.store),
-                  title: Text('About Us'),
-                  onTap: _openWebview,
-                ),
-
-                ListTile(
-                  leading: new Icon(Icons.person),
-                  title: Text('My Profile'),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    Navigator.pushNamed(
-                      context,
-                      '/my-profile',
-                    );
-                  },
-                ),
-                ListTile(
-                  leading: new Icon(Icons.card_giftcard),
-                  title: Text('My Orders'),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    Navigator.pushNamed(
-                      context,
-                      '/my-orders',
-                    );
-                  },
-                ),
-                ListTile(
-                  leading: new Icon(Icons.feedback),
-                  title: Text('Feedback'),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    Navigator.pushNamed(
-                      context,
-                      '/feedback',
-                    );
-                  },
-                ),
-                //Divider(height: 1),
-                ListTile(
-                  leading: new Icon(Icons.lock_open),
-                  title: Text('Change PIN'),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    Navigator.pushNamed(
-                      context,
-                      '/change-pin',
-                    );
-                  },
-                ),
-                Divider(height: 1),
-                ListTile(
-                  leading: new Icon(Icons.exit_to_app),
-                  title: Text('Logout'),
-                  onTap: () async {
-                    SharedPreferences prefs = await SharedPreferences
-                        .getInstance();
-                    //prefs.remove('logged_in');
-                    prefs.clear();
-                    Navigator.pushReplacementNamed(context, '/login');
-                  },
-                ),
-              ],
-            ),
-          ]
-          ),
+            ]
         ),
       ),
     );

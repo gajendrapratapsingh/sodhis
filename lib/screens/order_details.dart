@@ -64,10 +64,12 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   }
 
   Future _futureOrderDetails() async {
-    var response = await http
-        .post(new Uri.https(BASE_URL, API_PATH + "/order-details"), body: {
-      "user_id": _userId,
-      "order_id": _orderId,
+    print(_userId.toString());
+    print(_orderId.toString());
+    var response = await http.post(new Uri.https(BASE_URL, API_PATH + "/order-details"),
+        body: {
+          "user_id": _userId,
+          "order_id": _orderId,
     }, headers: {
       "Accept": "application/json",
       "authorization": basicAuth
@@ -75,6 +77,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     if (response.statusCode == 200) {
       var data = json.decode(response.body);
       var result = data['Response'];
+      print(result);
       return result;
     } else {
       throw Exception('Something went wrong');
@@ -138,6 +141,16 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                               Text(snapshot.data['order_status']),
                             ]),
                       ),
+                      Padding(
+                        padding: const EdgeInsets.only(
+                            left: 12, right: 12, bottom: 12),
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('Payment Mode'),
+                              Text(snapshot.data['payment_mode']),
+                            ]),
+                      ),
                     ],
                   ),
                 ),
@@ -163,7 +176,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                         padding: const EdgeInsets.only(
                             left: 12, right: 12, bottom: 12),
                         child: Text(
-                          snapshot.data['name'],
+                          snapshot.data['name'].toString().toUpperCase(),
                           style: TextStyle(fontWeight: FontWeight.w500),
                         ),
                       ),
@@ -199,13 +212,59 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                       Divider(
                         height: 26,
                       ),
-                      for (var i in snapshot.data['items'])
-                        ListTile(
-                          leading: _networkImage(i['product_image']),
-                          title: Text(i['product_name']),
-                          subtitle: Text('Quantity: ' + i['quantity']),
-                          trailing: Text("\u20B9 " + i['price']),
-                        ),
+                      ListView.builder(
+                          shrinkWrap: true,
+                          primary: false,
+                          padding: EdgeInsets.zero,
+                          itemCount: snapshot.data['items'].length,
+                          itemBuilder: (BuildContext context,int index){
+                             return Padding(
+                                 padding: EdgeInsets.only(left: 10, right: 10.0),
+                                 child: Container(
+                                    height: 90,
+                                    width: double.infinity,
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: [
+                                        Container(
+                                          height: 85,
+                                          width: 85,
+                                          child: Card(
+                                            semanticContainer: true,
+                                            clipBehavior: Clip.antiAliasWithSaveLayer,
+                                            child: Image.network(
+                                              snapshot.data['items'][index]['product_image'],
+                                              fit: BoxFit.fill,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(10.0),
+                                            ),
+                                            elevation: 5,
+                                            margin: EdgeInsets.all(10),
+                                          ),
+                                        ),
+                                        SizedBox(width: 10),
+                                        Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Text(snapshot.data['items'][index]['product_name'], style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500, fontSize: 16.0)),
+                                                SizedBox(height: 3.0),
+                                                snapshot.data['items'][index]['addons'].toString() != "null" ? Text(snapshot.data['items'][index]['addons'], style: TextStyle(color: Colors.grey, fontSize: 14.0)) : Text('Quantity: ' + snapshot.data['items'][index]['quantity'].toString()),
+                                                SizedBox(height: 3.0),
+                                                snapshot.data['items'][index]['addons'].toString() != "null" ? Text('Quantity: ' + snapshot.data['items'][index]['quantity'].toString()) : Text(""),
+                                              ],
+                                            )
+                                        ),
+                                        Text("\u20B9 " + snapshot.data['items'][index]['price'].toString()),
+                                      ],
+                                    ),
+                                 ),
+                             );
+                          }
+                      ),
                       SizedBox(height: 12),
                     ],
                   ),
@@ -246,6 +305,17 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                             children: [
                               Text('Delivery Fee'),
                               Text("\u20B9 " + snapshot.data['delivery_fee']),
+                            ]),
+                      ),
+                      snapshot.data['coupon_discount'].toString() == "null"  || snapshot.data['coupon_discount'].toString() == "0.00" ? Container()
+                          : Padding(
+                        padding: const EdgeInsets.only(
+                            left: 12, right: 12, bottom: 12),
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('Coupon Discount'),
+                              Text("\u20B9 "+snapshot.data['coupon_discount'].toString()),
                             ]),
                       ),
                       Padding(

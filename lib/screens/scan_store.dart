@@ -1,6 +1,6 @@
-import 'package:barcode_scan/model/android_options.dart';
-import 'package:barcode_scan/model/scan_options.dart';
-import 'package:barcode_scan/platform_wrapper.dart';
+// import 'package:barcode_scan/model/android_options.dart';
+// import 'package:barcode_scan/model/scan_options.dart';
+// import 'package:barcode_scan/platform_wrapper.dart';
 import 'package:flutter/material.dart';
 
 class ScanStore extends StatefulWidget {
