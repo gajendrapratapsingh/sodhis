@@ -69,6 +69,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   MaterialColor createMaterialColor(Color color) {
+    //commit now
     List strengths = <double>[.05];
     Map swatch = <int, Color>{};
     final int r = color.red, g = color.green, b = color.blue;
